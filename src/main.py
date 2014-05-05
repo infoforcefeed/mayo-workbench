@@ -2,7 +2,7 @@ from flask import Flask
 
 from mayoworkbench.routes import app as routes
 
-app = Flask('mayoworkbench', __name__, static_folder='mayoworkbench/static')
+app = Flask(__name__, static_folder='mayoworkbench/static')
 app.register_blueprint(routes)
 
 
