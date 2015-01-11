@@ -42,7 +42,7 @@ const size_t get_response_headers_num_elements() {
 	return sizeof(response_headers)/sizeof(response_headers[0]);
 }
 
-int r_404_handler(const http_request *request, http_response *response) {
+int r_404_handler(const http_request *request, http_response *response, const void *extra) {
 	response->out = (unsigned char *)"<h1>\"Welcome to Die|</h1>";
 	response->outsize = strlen("<h1>\"Welcome to Die|</h1>");
 	return 404;
@@ -170,7 +170,7 @@ error:
 	return -1;
 }
 
-int respond(const int accept_fd, const route *all_routes, const size_t route_num_elements) {
+int respond(const int accept_fd, const route *all_routes, const size_t route_num_elements, const void *extra) {
 	char to_read[MAX_READ_LEN] = {0};
 	char *actual_response = NULL;
 	http_response response = {.mimetype = "text/html", 0};
@@ -227,7 +227,7 @@ int respond(const int accept_fd, const route *all_routes, const size_t route_num
 		matching_route = &r_404_route;
 
 	/* Run the handler through with the data we have: */
-	const int response_code = matching_route->handler(&request, &response);
+	const int response_code = matching_route->handler(&request, &response, extra);
 	assert(response.outsize > 0);
 	assert(response.out != NULL);
 

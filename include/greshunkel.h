@@ -4,7 +4,7 @@
 #include "stack.h"
 
 #define WISDOM_OF_WORDS 32
-#define MAX_GSHKL_STR_SIZE 256
+#define MAX_GSHKL_STR_SIZE 1024
 
 /* AND HE DECREED: */
 /* STRINGS SHALL NEVER BE MORE THAN 256 OCTETS! */

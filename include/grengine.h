@@ -34,14 +34,14 @@ typedef struct route {
 	char verb[VERB_SIZE];
 	char route_match[256];
 	size_t expected_matches;
-	int (*handler)(const http_request *request, http_response *response);
+	int (*handler)(const http_request *request, http_response *response, const void *extra);
 	void (*cleanup)(const int status_code, http_response *response);
 } route;
 
 
 /* Default 404 handler. */
 /* ------------------------------------------------------------------------ */
-int r_404_handler(const http_request *request, http_response *response);
+int r_404_handler(const http_request *request, http_response *response, const void *e);
 static const route r_404_route = {
 	.verb = "GET",
 	.route_match = "^.*$",
@@ -74,6 +74,8 @@ const size_t get_response_headers_num_elements();
 int parse_request(const char to_read[MAX_READ_LEN], http_request *out);
 /* Takes an accepted socket, an array of routes and the number of handlers in said array,
  * then calls the first handler to match the requested resource. It is responsible for
- * writing the result of the handler to the socket. */
-int respond(const int accept_fd, const route *all_routes, const size_t route_num_elements);
+ * writing the result of the handler to the socket. 
+ * Anything in extra is passed to the handler functions.
+ */
+int respond(const int accept_fd, const route *all_routes, const size_t route_num_elements, const void *extra);
 

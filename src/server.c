@@ -25,14 +25,33 @@
 #include "greshunkel.h"
 
 
+const static char LNAV[] =
+"<nav class=\"lnav grd\">"
+"	<div class=\"row\">"
+"		<div class=\"col-6\">"
+"			<h4>OlegDB</h4>"
+"			<span class=\"lnav-section\">Mayo Workbench</span>"
+"			<ul>"
+"				<li><a href=\"/\">Overview</a></li>"
+"				<li><a href=\"#\">Data</a></li>"
+"			</ul>"
+"			<span class=\"lnav-section\">OlegDB</span>"
+"			<ul>"
+"				<li><a href=\"https://olegdb.org/docs/0.1.5/en/documentation.html\">Documentation</a></li>"
+"			</ul>"
+"		</div>"
+"	</div>"
+"	<p class=\"copyright\">&copy;2015 Quinlan Pfiffer</p>"
+"</nav>";
+
 /* Various handlers for our routes: */
-static int static_handler(const http_request *request, http_response *response) {
+static int static_handler(const http_request *request, http_response *response, const void *e) {
 	/* Remove the leading slash: */
 	const char *file_path = request->resource + sizeof(char);
 	return mmap_file(file_path, response);
 }
 
-static int index_handler(const http_request *request, http_response *response) {
+static int index_handler(const http_request *request, http_response *response, const void *e) {
 	int rc = mmap_file("./templates/index.html", response);
 	if (rc != 200)
 		return rc;
@@ -43,6 +62,9 @@ static int index_handler(const http_request *request, http_response *response) {
 	/* Render that shit */
 	size_t new_size = 0;
 	greshunkel_ctext *ctext = gshkl_init_context();
+	const db_conn *conn = (db_conn *)e;
+	gshkl_add_string(ctext, "LNAV", LNAV);
+	gshkl_add_string(ctext, "DB_NAME", conn->db_name);
 	//gshkl_add_int(ctext, "webm_count", webm_count());
 	//gshkl_add_int(ctext, "alias_count", webm_alias_count());
 
@@ -59,7 +81,7 @@ static int index_handler(const http_request *request, http_response *response) {
 	return 200;
 }
 
-static int favicon_handler(const http_request *request, http_response *response) {
+static int favicon_handler(const http_request *request, http_response *response, const void *e) {
 	strncpy(response->mimetype, "image/x-icon", sizeof(response->mimetype));
 	return mmap_file("./static/favicon.ico", response);
 }
@@ -79,6 +101,7 @@ struct acceptor_arg {
 static void *acceptor(void *arg) {
 	const struct acceptor_arg *args = (struct acceptor_arg *)arg;
 	const int main_sock_fd = args->sock;
+	const db_conn *conn = args->conn;
 
 	while(1) {
 		struct sockaddr_storage their_addr = {0};
@@ -90,7 +113,7 @@ static void *acceptor(void *arg) {
 			log_msg(LOG_ERR, "Could not accept new connection.");
 			return NULL;
 		} else {
-			respond(new_fd, all_routes, sizeof(all_routes)/sizeof(all_routes[0]));
+			respond(new_fd, all_routes, sizeof(all_routes)/sizeof(all_routes[0]), conn);
 			close(new_fd);
 		}
 	}

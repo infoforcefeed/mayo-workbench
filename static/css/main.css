@@ -1,17 +1,26 @@
 /* vim: set ts=4 sw=4 noet : */
 body {
-	background-color: #F4F4F4;
+	/* background-color: #F4F4F4; */
+	background-image: url("/static/img/swirl_pattern.png");
 }
 #landing {
 	padding-bottom: 2em;
+}
+.logo {
+	display: block;
+	margin: 0 auto;
+	width: 150px;
+}
+.db-name {
+	text-transform: uppercase;
 }
 .lnav {
 	background-color: #FFF;
 	position: fixed;
 	height: 100%;
 	width: 200px;
-	-webkit-box-shadow: 2px 0 2px rgba(0,0,0,.07);
-	box-shadow: 2px 0 2px rgba(0,0,0,.07);
+	-webkit-box-shadow: 3px 0 2px rgba(0,0,0,.07);
+	box-shadow: 3px 0 2px rgba(0,0,0,.07);
 }
 .lnav > ul > li > a {
 	text-decoration: none;
