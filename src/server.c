@@ -1,0 +1,153 @@
+// vim: noet ts=4 sw=4
+#include <arpa/inet.h>
+#include <assert.h>
+#include <dirent.h>
+#include <fcntl.h>
+#include <netdb.h>
+#include <pthread.h>
+#include <regex.h>
+#include <sys/ioctl.h>
+#include <sys/mman.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <unistd.h>
+
+#include "db.h"
+#include "http.h"
+#include "logging.h"
+#include "server.h"
+#include "grengine.h"
+#include "greshunkel.h"
+
+
+/* Various handlers for our routes: */
+static int static_handler(const http_request *request, http_response *response) {
+	/* Remove the leading slash: */
+	const char *file_path = request->resource + sizeof(char);
+	return mmap_file(file_path, response);
+}
+
+static int index_handler(const http_request *request, http_response *response) {
+	int rc = mmap_file("./templates/index.html", response);
+	if (rc != 200)
+		return rc;
+	// 1. Render the mmap()'d file with greshunkel
+	const char *mmapd_region = (char *)response->out;
+	const size_t original_size = response->outsize;
+
+	/* Render that shit */
+	size_t new_size = 0;
+	greshunkel_ctext *ctext = gshkl_init_context();
+	//gshkl_add_int(ctext, "webm_count", webm_count());
+	//gshkl_add_int(ctext, "alias_count", webm_alias_count());
+
+	char *rendered = gshkl_render(ctext, mmapd_region, original_size, &new_size);
+	gshkl_free_context(ctext);
+
+	/* Clean up the stuff we're no longer using. */
+	munmap(response->out, original_size);
+	free(response->extra_data);
+
+	/* Make sure the response is kept up to date: */
+	response->outsize = new_size;
+	response->out = (unsigned char *)rendered;
+	return 200;
+}
+
+static int favicon_handler(const http_request *request, http_response *response) {
+	strncpy(response->mimetype, "image/x-icon", sizeof(response->mimetype));
+	return mmap_file("./static/favicon.ico", response);
+}
+
+static int robots_handler(const http_request *request, http_response *response) {
+	return mmap_file("./static/robots.txt", response);
+}
+
+/* All other routes: */
+static const route all_routes[] = {
+	{"GET", "^/robots.txt$", 0, &robots_handler, &mmap_cleanup},
+	{"GET", "^/favicon.ico$", 0, &favicon_handler, &mmap_cleanup},
+	{"GET", "^/static/[a-zA-Z0-9/_-]*\\.[a-zA-Z]*$", 0, &static_handler, &mmap_cleanup},
+	{"GET", "^/$", 0, &index_handler, &heap_cleanup},
+};
+
+static void *acceptor(void *arg) {
+	const int main_sock_fd = *(int*)arg;
+	while(1) {
+		struct sockaddr_storage their_addr = {0};
+		socklen_t sin_size = sizeof(their_addr);
+
+		int new_fd = accept(main_sock_fd, (struct sockaddr *)&their_addr, &sin_size);
+
+		if (new_fd == -1) {
+			log_msg(LOG_ERR, "Could not accept new connection.");
+			return NULL;
+		} else {
+			respond(new_fd, all_routes, sizeof(all_routes)/sizeof(all_routes[0]));
+			close(new_fd);
+		}
+	}
+	return NULL;
+}
+
+int http_serve(int main_sock_fd, const int num_threads) {
+	/* Our acceptor pool: */
+	pthread_t workers[num_threads];
+
+	int rc = -1;
+	main_sock_fd = socket(PF_INET, SOCK_STREAM, 0);
+	if (main_sock_fd <= 0) {
+		log_msg(LOG_ERR, "Could not create main socket.");
+		goto error;
+	}
+
+	int opt = 1;
+	setsockopt(main_sock_fd, SOL_SOCKET, SO_REUSEADDR, (void*) &opt, sizeof(opt));
+
+	const int port = 8080;
+	struct sockaddr_in hints = {0};
+	hints.sin_family		 = AF_INET;
+	hints.sin_port			 = htons(port);
+	hints.sin_addr.s_addr	 = htonl(INADDR_ANY);
+
+	rc = bind(main_sock_fd, (struct sockaddr *)&hints, sizeof(hints));
+	if (rc < 0) {
+		log_msg(LOG_ERR, "Could not bind main socket.");
+		goto error;
+	}
+
+	rc = listen(main_sock_fd, 0);
+	if (rc < 0) {
+		log_msg(LOG_ERR, "Could not listen on main socket.");
+		goto error;
+	}
+	log_msg(LOG_FUN, "Listening on http://localhost:%i/", port);
+
+	int i;
+	for (i = 0; i < num_threads; i++) {
+		if (pthread_create(&workers[i], NULL, acceptor, &main_sock_fd) != 0) {
+			goto error;
+		}
+		log_msg(LOG_INFO, "Thread %i started.", i);
+	}
+
+	for (i = 0; i < num_threads; i++) {
+		pthread_join(workers[i], NULL);
+		log_msg(LOG_INFO, "Thread %i stopped.", i);
+	}
+
+
+	close(main_sock_fd);
+	return 0;
+
+error:
+	perror("Socket error");
+	close(main_sock_fd);
+	return rc;
+}
+
