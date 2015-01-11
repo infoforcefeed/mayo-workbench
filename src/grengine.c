@@ -56,6 +56,8 @@ void guess_mimetype(const char *ending, const size_t ending_siz, http_response *
 		strncpy(response->mimetype, "image/jpeg", sizeof(response->mimetype));
 	} else if (strncasecmp(ending, ".txt", ending_siz) == 0) {
 		strncpy(response->mimetype, "text/plain", sizeof(response->mimetype));
+	} else if (strncasecmp(ending, ".svg", ending_siz) == 0) {
+		strncpy(response->mimetype, "image/svg+xml", sizeof(response->mimetype));
 	} else if (strncasecmp(ending, ".html", ending_siz) == 0) {
 		strncpy(response->mimetype, "text/html", sizeof(response->mimetype));
 	} else if (strncasecmp(ending, ".ico", ending_siz) == 0) {

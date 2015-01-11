@@ -28,6 +28,11 @@ static const char DB_MATCH[] =  "GET /%s/%s/_match HTTP/1.1\r\n"
 	"Accept-Encoding: identity\r\n"
 	"\r\n";
 
+static const char DB_ALL[] =  "GET /%s/_all HTTP/1.1\r\n"
+	"Host: %s:%s\r\n"
+	"Accept-Encoding: identity\r\n"
+	"\r\n";
+
 static int _fetch_matches_common(const db_conn *conn, const char prefix[static MAX_KEY_SIZE]) {
 	const size_t db_match_siz = strlen(conn->db_name) + strlen(conn->host) +
 								strlen(conn->port) + strlen(DB_MATCH) +
@@ -41,6 +46,29 @@ static int _fetch_matches_common(const db_conn *conn, const char prefix[static M
 		goto error;
 
 	snprintf(new_db_request, db_match_siz, DB_MATCH, conn->db_name, prefix, conn->host, conn->port);
+	int rc = send(sock, new_db_request, strlen(new_db_request), 0);
+	if (strlen(new_db_request) != rc)
+		goto error;
+
+	return sock;
+
+error:
+	close(sock);
+	return 0;
+}
+
+static int _send_fetch_all_req(const db_conn *conn) {
+	const size_t db_match_siz = strlen(conn->db_name) + strlen(conn->host) +
+								strlen(conn->port) + strlen(DB_ALL);
+	char new_db_request[db_match_siz];
+	memset(new_db_request, '\0', db_match_siz);
+
+	int sock = 0;
+	sock = connect_to_host_with_port(conn->host, conn->port);
+	if (sock == 0)
+		goto error;
+
+	snprintf(new_db_request, db_match_siz, DB_ALL, conn->db_name, conn->host, conn->port);
 	int rc = send(sock, new_db_request, strlen(new_db_request), 0);
 	if (strlen(new_db_request) != rc)
 		goto error;
@@ -95,6 +123,53 @@ db_key_match *fetch_matches_from_db(const db_conn *conn, const char prefix[stati
 	if (!_data)
 		goto error;
 
+	db_key_match *eol = NULL;
+	db_key_match *cur = eol;
+	int i;
+	unsigned char *line_start = _data, *line_end = NULL;
+	/* TODO: Use a vector here. */
+	for (i = 0; i < dsize; i++) {
+		if (_data[i] == '\n' && i + 1 < dsize) {
+			line_end = &_data[i];
+			const size_t line_size = line_end - line_start;
+
+			db_key_match _stack = {
+				.key = {0},
+				.next = cur
+			};
+			memcpy((char *)_stack.key, line_start, line_size);
+
+			db_key_match *new = calloc(1, sizeof(db_key_match));
+			memcpy(new, &_stack, sizeof(db_key_match));
+
+			cur = new;
+			line_start = &_data[++i];
+		}
+	}
+
+	free(_data);
+	close(sock);
+	return cur;
+
+error:
+	free(_data);
+	close(sock);
+	return NULL;
+}
+
+db_key_match *fetch_keyset_from_db(const db_conn *conn) {
+	size_t dsize = 0;
+	unsigned char *_data = NULL;
+
+	int sock = _send_fetch_all_req(conn);
+	if (!sock)
+		goto error;
+
+	_data = receive_http(sock, &dsize);
+	if (!_data)
+		goto error;
+
+	/* TODO: Refactor this into common function with fetch_matches_from_db */
 	db_key_match *eol = NULL;
 	db_key_match *cur = eol;
 	int i;
