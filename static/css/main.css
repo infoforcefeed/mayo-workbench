@@ -1,7 +1,47 @@
 /* vim: set ts=4 sw=4 noet : */
 body {
-	font-family: 'Open Sans', Helvetica, Arial, sans-serif;
+	background-color: #F4F4F4;
 }
 #landing {
 	padding-bottom: 2em;
+}
+.lnav {
+	background-color: #FFF;
+	position: fixed;
+	height: 100%;
+	width: 200px;
+	-webkit-box-shadow: 2px 0 2px rgba(0,0,0,.07);
+	box-shadow: 2px 0 2px rgba(0,0,0,.07);
+}
+.lnav > ul > li > a {
+	text-decoration: none;
+}
+.lnav-section {
+	text-decoration: underline;
+}
+.main {
+	padding-top: 6em;
+	margin-left: 200px;
+	height: 100%;
+}
+.info-block {
+	padding: 2em;
+	width: 90%;
+	display: block;
+	position: relative;
+	margin: 0 auto;
+	background-color: #FFF;
+	border: solid 1px #D7D7D7;
+	top: 0;
+	right: 0;
+	left: 0;
+	bottom: 0;
+}
+.copyright {
+	font-size: 14px;
+	position: absolute;
+	width: 100%;
+	left: 0;
+	bottom: 0;
+	text-align: center;
 }
