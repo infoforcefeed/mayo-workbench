@@ -15,6 +15,9 @@
 
 #define DEBUG 0
 
+#define DEFAULT_DB_HOST "localhost"
+#define DEFAULT_DB_PORT "38080"
+
 int main_sock_fd = 0;
 
 void term(int signum) {
@@ -29,6 +32,14 @@ int main(int argc, char *argv[]) {
 	signal(SIGCHLD, SIG_IGN);
 
 	int num_threads = DEFAULT_NUM_THREADS;
+
+	char db_host[256] = {0};
+	char db_port[64] = {0};
+
+	/* Defaults: */
+	strncpy(db_host, DEFAULT_DB_HOST, sizeof(db_host));
+	strncpy(db_port, DEFAULT_DB_PORT, sizeof(db_port));
+
 	int i;
 	for (i = 1; i < argc; i++) {
 		const char *cur_arg = argv[i];
@@ -43,8 +54,26 @@ int main(int argc, char *argv[]) {
 				log_msg(LOG_ERR, "Not enough arguments to -t.");
 				return -1;
 			}
+		} else if (strncmp(cur_arg, "-h", strlen("-h")) == 0) {
+			if ((i + 1) < argc) {
+				const char *host = argv[++i];
+				strncpy(db_host, host, sizeof(db_host));
+			} else {
+				log_msg(LOG_ERR, "Not enough arguments to -h.");
+				return -1;
+			}
+		} else if (strncmp(cur_arg, "-p", strlen("-p")) == 0) {
+			if ((i + 1) < argc) {
+				const char *port = argv[++i];
+				strncpy(db_port, port, sizeof(db_port));
+			} else {
+				log_msg(LOG_ERR, "Not enough arguments to -p.");
+				return -1;
+			}
 		}
 	}
+
+	log_msg(LOG_INFO, "Using DB host: http://%s:%s.", db_host, db_port);
 
 	int rc = 0;
 	if ((rc = http_serve(main_sock_fd, num_threads)) != 0) {

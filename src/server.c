@@ -109,7 +109,7 @@ int http_serve(int main_sock_fd, const int num_threads) {
 	int opt = 1;
 	setsockopt(main_sock_fd, SOL_SOCKET, SO_REUSEADDR, (void*) &opt, sizeof(opt));
 
-	const int port = 8080;
+	const int port = 8666;
 	struct sockaddr_in hints = {0};
 	hints.sin_family		 = AF_INET;
 	hints.sin_port			 = htons(port);
