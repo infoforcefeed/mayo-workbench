@@ -1,6 +1,6 @@
 CFLAGS=-Werror -Wall -O2 -g3
 INCLUDES=-pthread -I./include/
-NAME=mayobench
+NAME=mayoworkbench
 COMMON_OBJ=http.o db.o utils.o vector.o logging.o
 
 

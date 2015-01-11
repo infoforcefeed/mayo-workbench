@@ -18,4 +18,4 @@ char *strnstr(const char *haystack, const char *needle, size_t len);
 time_t get_file_creation_date(const char *file_path);
 size_t get_file_size(const char *file_path);
 
-int hash_string_fnv1a(const unsigned char *string, const size_t siz, char outbuf[static HASH_IMAGE_STR_SIZE]);
+int hash_string_fnv1a(const unsigned char *string, const size_t siz, char outbuf[static FNV_HASH_SIZE]);

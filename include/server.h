@@ -4,4 +4,4 @@
 
 #define DEFAULT_NUM_THREADS 2
 
-int http_serve(int main_sock_fd, const int num_threads);
+int http_serve(int main_sock_fd, const int num_threads, const struct db_conn *conn);

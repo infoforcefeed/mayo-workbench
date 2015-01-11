@@ -76,8 +76,15 @@ static const route all_routes[] = {
 	{"GET", "^/$", 0, &index_handler, &heap_cleanup},
 };
 
+struct acceptor_arg {
+	const int sock;
+	const db_conn *conn;
+};
+
 static void *acceptor(void *arg) {
-	const int main_sock_fd = *(int*)arg;
+	const struct acceptor_arg *args = (struct acceptor_arg *)arg;
+	const int main_sock_fd = args->sock;
+
 	while(1) {
 		struct sockaddr_storage their_addr = {0};
 		socklen_t sin_size = sizeof(their_addr);
@@ -95,7 +102,7 @@ static void *acceptor(void *arg) {
 	return NULL;
 }
 
-int http_serve(int main_sock_fd, const int num_threads) {
+int http_serve(int main_sock_fd, const int num_threads, const db_conn *conn) {
 	/* Our acceptor pool: */
 	pthread_t workers[num_threads];
 
@@ -128,9 +135,14 @@ int http_serve(int main_sock_fd, const int num_threads) {
 	}
 	log_msg(LOG_FUN, "Listening on http://localhost:%i/", port);
 
+	struct acceptor_arg arg = {
+		.sock = main_sock_fd,
+		.conn = conn
+	};
+
 	int i;
 	for (i = 0; i < num_threads; i++) {
-		if (pthread_create(&workers[i], NULL, acceptor, &main_sock_fd) != 0) {
+		if (pthread_create(&workers[i], NULL, acceptor, &arg) != 0) {
 			goto error;
 		}
 		log_msg(LOG_INFO, "Thread %i started.", i);

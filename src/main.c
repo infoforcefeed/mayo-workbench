@@ -33,12 +33,15 @@ int main(int argc, char *argv[]) {
 
 	int num_threads = DEFAULT_NUM_THREADS;
 
-	char db_host[256] = {0};
-	char db_port[64] = {0};
+	db_conn conn = {
+		.host = {0},
+		.port = {0},
+		.db_name = {0}
+	};
 
 	/* Defaults: */
-	strncpy(db_host, DEFAULT_DB_HOST, sizeof(db_host));
-	strncpy(db_port, DEFAULT_DB_PORT, sizeof(db_port));
+	strncpy(conn.host, DEFAULT_DB_HOST, sizeof(conn.host));
+	strncpy(conn.port, DEFAULT_DB_PORT, sizeof(conn.port));
 
 	int i;
 	for (i = 1; i < argc; i++) {
@@ -57,7 +60,7 @@ int main(int argc, char *argv[]) {
 		} else if (strncmp(cur_arg, "-h", strlen("-h")) == 0) {
 			if ((i + 1) < argc) {
 				const char *host = argv[++i];
-				strncpy(db_host, host, sizeof(db_host));
+				strncpy(conn.host, host, sizeof(conn.host));
 			} else {
 				log_msg(LOG_ERR, "Not enough arguments to -h.");
 				return -1;
@@ -65,18 +68,31 @@ int main(int argc, char *argv[]) {
 		} else if (strncmp(cur_arg, "-p", strlen("-p")) == 0) {
 			if ((i + 1) < argc) {
 				const char *port = argv[++i];
-				strncpy(db_port, port, sizeof(db_port));
+				strncpy(conn.port, port, sizeof(conn.port));
 			} else {
 				log_msg(LOG_ERR, "Not enough arguments to -p.");
+				return -1;
+			}
+		} else if (strncmp(cur_arg, "-n", strlen("-n")) == 0) {
+			if ((i + 1) < argc) {
+				const char *name = argv[++i];
+				strncpy(conn.db_name, name, sizeof(conn.db_name));
+			} else {
+				log_msg(LOG_ERR, "Not enough arguments to -n.");
 				return -1;
 			}
 		}
 	}
 
-	log_msg(LOG_INFO, "Using DB host: http://%s:%s.", db_host, db_port);
+	if (!strnlen(conn.db_name, sizeof(conn.db_name))) {
+		log_msg(LOG_ERR, "A database name is required (for now). Please specify one with -n.");
+		exit(1);
+	}
+
+	log_msg(LOG_INFO, "Connecting to db '%s' on host: http://%s:%s.", conn.db_name, conn.host, conn.port);
 
 	int rc = 0;
-	if ((rc = http_serve(main_sock_fd, num_threads)) != 0) {
+	if ((rc = http_serve(main_sock_fd, num_threads, &conn)) != 0) {
 		term(SIGTERM);
 		log_msg(LOG_ERR, "Could not start HTTP service.");
 		return rc;

@@ -89,7 +89,7 @@ size_t get_file_size(const char *file_path) {
 	return st.st_size;
 }
 
-int hash_string_fnv1a(const unsigned char *key, const size_t siz, char outbuf[static HASH_IMAGE_STR_SIZE]) {
+int hash_string_fnv1a(const unsigned char *key, const size_t siz, char outbuf[static FNV_HASH_SIZE]) {
 	/* https://en.wikipedia.org/wiki/Fowler_Noll_Vo_hash */
 	const uint64_t fnv_prime = 1099511628211ULL;
 	const uint64_t fnv_offset_bias = 14695981039346656037ULL;
