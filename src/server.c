@@ -81,6 +81,40 @@ static int index_handler(const http_request *request, http_response *response, c
 	return 200;
 }
 
+static int datum_handler(const http_request *request, http_response *response, const void *e) {
+	int rc = mmap_file("./templates/datum.html", response);
+	if (rc != 200)
+		return rc;
+	const char *mmapd_region = (char *)response->out;
+	const size_t original_size = response->outsize;
+
+	size_t new_size = 0;
+	greshunkel_ctext *ctext = gshkl_init_context();
+	const db_conn *conn = (db_conn *)e;
+	gshkl_add_string(ctext, "LNAV", LNAV);
+	gshkl_add_string(ctext, "DB_NAME", conn->db_name);
+
+	char key[MAX_KEY_SIZE] = {0};
+	strncpy(key, request->resource + request->matches[1].rm_so, MAX_KEY_SIZE);
+
+	gshkl_add_string(ctext, "RECORD", key);
+
+	size_t dsize = 0;
+	char *data = (char *)fetch_data_from_db(conn, key, &dsize);
+	gshkl_add_string(ctext, "VALUE", data);
+	free(data);
+
+	char *rendered = gshkl_render(ctext, mmapd_region, original_size, &new_size);
+	gshkl_free_context(ctext);
+
+	munmap(response->out, original_size);
+	free(response->extra_data);
+
+	response->outsize = new_size;
+	response->out = (unsigned char *)rendered;
+	return 200;
+}
+
 static int data_handler(const http_request *request, http_response *response, const void *e) {
 	int rc = mmap_file("./templates/data.html", response);
 	if (rc != 200)
@@ -129,6 +163,7 @@ static const route all_routes[] = {
 	{"GET", "^/favicon.ico$", 0, &favicon_handler, &mmap_cleanup},
 	{"GET", "^/static/[a-zA-Z0-9/_-]*\\.[a-zA-Z]*$", 0, &static_handler, &mmap_cleanup},
 	{"GET", "^/data$", 0, &data_handler, &heap_cleanup},
+	{"GET", "^/datum/([a-zA-Z0-9\\/\\_\\-\\:]*)$", 1, &datum_handler, &heap_cleanup},
 	{"GET", "^/$", 0, &index_handler, &heap_cleanup},
 };
 
