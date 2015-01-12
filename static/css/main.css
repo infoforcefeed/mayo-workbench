@@ -22,6 +22,14 @@ body {
 	-webkit-box-shadow: 3px 0 2px rgba(0,0,0,.07);
 	box-shadow: 3px 0 2px rgba(0,0,0,.07);
 }
+.rec-result td > .record {
+	padding-top: 0;
+	font-family: Monaco,"Lucida Console",Courier,monospace;
+	font-size: 1em;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	margin: 0;
+}
 .lnav > ul > li > a {
 	text-decoration: none;
 }

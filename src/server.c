@@ -33,7 +33,7 @@ const static char LNAV[] =
 "			<span class=\"lnav-section\">Mayo Workbench</span>"
 "			<ul>"
 "				<li><a href=\"/\">Overview</a></li>"
-"				<li><a href=\"#\">Data</a></li>"
+"				<li><a href=\"/data\">Data</a></li>"
 "			</ul>"
 "			<span class=\"lnav-section\">OlegDB</span>"
 "			<ul>"
@@ -65,8 +65,8 @@ static int index_handler(const http_request *request, http_response *response, c
 	const db_conn *conn = (db_conn *)e;
 	gshkl_add_string(ctext, "LNAV", LNAV);
 	gshkl_add_string(ctext, "DB_NAME", conn->db_name);
-	//gshkl_add_int(ctext, "webm_count", webm_count());
-	//gshkl_add_int(ctext, "alias_count", webm_alias_count());
+
+	gshkl_add_int(ctext, "key_count", fetch_num_keyset_from_db(conn));
 
 	char *rendered = gshkl_render(ctext, mmapd_region, original_size, &new_size);
 	gshkl_free_context(ctext);
@@ -81,6 +81,44 @@ static int index_handler(const http_request *request, http_response *response, c
 	return 200;
 }
 
+static int data_handler(const http_request *request, http_response *response, const void *e) {
+	int rc = mmap_file("./templates/data.html", response);
+	if (rc != 200)
+		return rc;
+	const char *mmapd_region = (char *)response->out;
+	const size_t original_size = response->outsize;
+
+	size_t new_size = 0;
+	greshunkel_ctext *ctext = gshkl_init_context();
+	const db_conn *conn = (db_conn *)e;
+	gshkl_add_string(ctext, "LNAV", LNAV);
+	gshkl_add_string(ctext, "DB_NAME", conn->db_name);
+
+	greshunkel_var *records = gshkl_add_array(ctext, "RECORDS");
+	int i = 0;
+	db_key_match *matches = fetch_keyset_from_db(conn);
+	db_key_match *cur = matches;
+	while (cur) {
+		i++;
+		db_key_match *n = cur->next;
+		gshkl_add_string_to_loop(records, cur->key);
+		free(cur);
+		cur = n;
+	}
+
+	gshkl_add_int(ctext, "RESULT_COUNT", i);
+
+	char *rendered = gshkl_render(ctext, mmapd_region, original_size, &new_size);
+	gshkl_free_context(ctext);
+
+	munmap(response->out, original_size);
+	free(response->extra_data);
+
+	response->outsize = new_size;
+	response->out = (unsigned char *)rendered;
+	return 200;
+}
+
 static int favicon_handler(const http_request *request, http_response *response, const void *e) {
 	strncpy(response->mimetype, "image/x-icon", sizeof(response->mimetype));
 	return mmap_file("./static/favicon.ico", response);
@@ -90,6 +128,7 @@ static int favicon_handler(const http_request *request, http_response *response,
 static const route all_routes[] = {
 	{"GET", "^/favicon.ico$", 0, &favicon_handler, &mmap_cleanup},
 	{"GET", "^/static/[a-zA-Z0-9/_-]*\\.[a-zA-Z]*$", 0, &static_handler, &mmap_cleanup},
+	{"GET", "^/data$", 0, &data_handler, &heap_cleanup},
 	{"GET", "^/$", 0, &index_handler, &heap_cleanup},
 };
 

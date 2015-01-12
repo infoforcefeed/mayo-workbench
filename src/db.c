@@ -157,6 +157,37 @@ error:
 	return NULL;
 }
 
+unsigned int fetch_num_keyset_from_db(const db_conn *conn) {
+	size_t outdata = 0;
+	char *_data = NULL;
+	char *_value = NULL;
+
+	int sock = _send_fetch_all_req(conn);
+	if (!sock)
+		goto error;
+
+	_data = receieve_only_http_header(sock, SELECT_TIMEOUT, &outdata);
+	if (!_data)
+		goto error;
+
+	_value = get_header_value(_data, outdata, "X-Olegdb-Num-Matches");
+	if (!_value)
+		goto error;
+
+	unsigned int to_return = strtol(_value, NULL, 10);
+
+	free(_data);
+	free(_value);
+	close(sock);
+	return to_return;
+
+error:
+	free(_value);
+	free(_data);
+	close(sock);
+	return 0;
+}
+
 db_key_match *fetch_keyset_from_db(const db_conn *conn) {
 	size_t dsize = 0;
 	unsigned char *_data = NULL;

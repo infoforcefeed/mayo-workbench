@@ -23,6 +23,7 @@ db_key_match *fetch_matches_from_db(const db_conn *conn, const char prefix[stati
 unsigned int fetch_num_matches_from_db(const db_conn *conn, const char prefix[static MAX_KEY_SIZE]);
 /* Dumps the WHOLE DAMN KEYSPACE! */
 db_key_match *fetch_keyset_from_db(const db_conn *conn);
+unsigned int fetch_num_keyset_from_db(const db_conn *conn);
 
 typedef struct db_match {
 	const unsigned char *data;

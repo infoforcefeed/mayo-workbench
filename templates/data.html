@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Mayo Workbench - xXx @DB_NAME xXx Data</title>
+		<meta charset="UTF-8">
+		<link rel="stylesheet" media="all" href="/static/css/furtive.css" />
+		<link rel="stylesheet" media="all" href="/static/css/main.css" />
+	</head>
+	<body>
+		xXx @LNAV xXx
+		<div class="main">
+			<div class="grd">
+				<div class="row">
+					<article class="info-block">
+						<div class="grd">
+							<div class="row">
+								<div class="col-2">
+									<span>Benchin' on xXx @DB_NAME xXx</span>
+								</div>
+								<div class="col-2">
+									<span>Result Count: xXx @RESULT_COUNT xXx</span>
+								</div>
+								<div class="col-2">
+									<input type="text" placeholder="Filter by Prefix" />
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-6">
+									<table class="rec-result">
+										<thead>
+											<th>key</th>
+										</thead>
+										xXx LOOP row RECORDS xXx
+											<tr>
+												<td><a href="/datum/xXx @row xXx" class="record">xXx @row xXx</a></td>
+											</tr>
+										xXx BBL xXx
+									</table>
+								</div>
+							</div>
+						</div>
+					</article>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>
+<!-- vim: noet ts=4 sw=4:
+-->
