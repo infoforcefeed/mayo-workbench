@@ -4,6 +4,7 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <netdb.h>
+#include <netinet/in.h>
 #include <pthread.h>
 #include <regex.h>
 #include <sys/ioctl.h>
