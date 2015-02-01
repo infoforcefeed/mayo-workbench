@@ -1,3 +1,5 @@
+<img src="screenshot.png" />
+
 # Mayo-Workbench
 
 Small CRUD application to inspect, modify, sort, reason and swear about data
