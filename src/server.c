@@ -102,7 +102,10 @@ static int datum_handler(const http_request *request, http_response *response, c
 
 	size_t dsize = 0;
 	char *data = (char *)fetch_data_from_db(conn, key, &dsize);
-	gshkl_add_string(ctext, "VALUE", data);
+	if (data)
+		gshkl_add_string(ctext, "VALUE", data);
+	else
+		gshkl_add_string(ctext, "VALUE", "(No data for this key)");
 	free(data);
 
 	char *rendered = gshkl_render(ctext, mmapd_region, original_size, &new_size);
