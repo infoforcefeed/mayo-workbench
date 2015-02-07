@@ -207,7 +207,7 @@ db_key_match *fetch_keyset_from_db(const db_conn *conn) {
 	unsigned char *line_start = _data, *line_end = NULL;
 	/* TODO: Use a vector here. */
 	for (i = 0; i < dsize; i++) {
-		if (_data[i] == '\n' && i + 1 < dsize) {
+		if (_data[i] == '\n' || i == (dsize - 1)) {
 			line_end = &_data[i];
 			const size_t line_size = line_end - line_start;
 
