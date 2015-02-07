@@ -208,7 +208,10 @@ db_key_match *fetch_keyset_from_db(const db_conn *conn) {
 	/* TODO: Use a vector here. */
 	for (i = 0; i < dsize; i++) {
 		if (_data[i] == '\n' || i == (dsize - 1)) {
-			line_end = &_data[i];
+			if (i == (dsize - 1))
+				line_end = &_data[i + 1];
+			else
+				line_end = &_data[i];
 			const size_t line_size = line_end - line_start;
 
 			db_key_match _stack = {
