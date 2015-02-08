@@ -23,7 +23,12 @@ static const char DB_POST[] = "POST /%s/%s HTTP/1.1\r\n"
 /* We use 'Accept-Encoding: identity' here so we don't get back chunked
  * transfer shit. I hate parsing that garbage.
  */
-static const char DB_MATCH[] =  "GET /%s/%s/_match HTTP/1.1\r\n"
+static const char DB_MATCH[] = "GET /%s/%s/_match HTTP/1.1\r\n"
+	"Host: %s:%s\r\n"
+	"Accept-Encoding: identity\r\n"
+	"\r\n";
+
+static const char UPTIME_REQUEST[] = "GET /%s/_uptime HTTP/1.1\r\n"
 	"Host: %s:%s\r\n"
 	"Accept-Encoding: identity\r\n"
 	"\r\n";
@@ -346,4 +351,39 @@ db_match *filter(const db_conn *conn, const char prefix[static MAX_KEY_SIZE], co
 	}
 
 	return cur;
+}
+
+const time_t fetch_uptime_from_db(const db_conn *conn) {
+	unsigned char *_data = NULL;
+	const size_t uptime_siz = strlen(conn->db_name) + strlen(conn->host) +
+								strlen(conn->port) + strlen(UPTIME_REQUEST);
+	char new_db_request[uptime_siz];
+	memset(new_db_request, '\0', uptime_siz);
+
+	int sock = 0;
+	sock = connect_to_host_with_port(conn->host, conn->port);
+	if (sock == 0)
+		goto error;
+
+	snprintf(new_db_request, uptime_siz, UPTIME_REQUEST,
+		conn->db_name, conn->host, conn->port);
+	int rc = send(sock, new_db_request, strlen(new_db_request), 0);
+	if (strlen(new_db_request) != rc)
+		goto error;
+
+	size_t out;
+	_data = receive_http(sock, &out);
+	if (!_data) {
+		log_msg(LOG_ERR, "No reply from DB.");
+		goto error;
+	}
+
+	time_t uptime = strtoul((char *)_data, NULL, 10);
+	free(_data);
+	close(sock);
+	return uptime;
+
+error:
+	close(sock);
+	return 0;
 }

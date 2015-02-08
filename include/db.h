@@ -25,6 +25,8 @@ unsigned int fetch_num_matches_from_db(const db_conn *conn, const char prefix[st
 db_key_match *fetch_keyset_from_db(const db_conn *conn);
 unsigned int fetch_num_keyset_from_db(const db_conn *conn);
 
+const time_t fetch_uptime_from_db(const db_conn *conn);
+
 typedef struct db_match {
 	const unsigned char *data;
 	const size_t dsize;

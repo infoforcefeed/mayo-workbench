@@ -68,6 +68,7 @@ static int index_handler(const http_request *request, http_response *response, c
 	gshkl_add_string(ctext, "DB_NAME", conn->db_name);
 
 	gshkl_add_int(ctext, "key_count", fetch_num_keyset_from_db(conn));
+	gshkl_add_int(ctext, "UPTIME", fetch_uptime_from_db(conn));
 
 	char *rendered = gshkl_render(ctext, mmapd_region, original_size, &new_size);
 	gshkl_free_context(ctext);
