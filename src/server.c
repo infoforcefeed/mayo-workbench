@@ -18,9 +18,10 @@
 #include <strings.h>
 #include <unistd.h>
 
+#include <38-moths/38-moths.h>
+
 #include "db.h"
 #include "http.h"
-#include "logging.h"
 #include "server.h"
 #include "grengine.h"
 #include "greshunkel.h"
