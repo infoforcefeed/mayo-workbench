@@ -94,7 +94,7 @@ int main(int argc, char *argv[]) {
 	log_msg(LOG_INFO, "Connecting to db '%s' on host: http://%s:%s.", conn.db_name, conn.host, conn.port);
 
 	int rc = 0;
-	if ((rc = http_serve(&main_sock_fd, num_threads, all_routes, (sizeof(all_routes[0])/sizeof(all_routes)))) != 0) {
+	if ((rc = http_serve(&main_sock_fd, num_threads, all_routes, (sizeof(all_routes)/sizeof(all_routes[0])))) != 0) {
 		term(SIGTERM);
 		log_msg(LOG_ERR, "Could not start HTTP service.");
 		return rc;
