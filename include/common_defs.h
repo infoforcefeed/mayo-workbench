@@ -8,3 +8,12 @@
 #define DB_HOST_SIZ 256
 #define DB_PORT_SIZ 64
 #define DB_NAME_SIZ 64
+
+#include <oleg-http/oleg-http.h>
+
+/* Global connection object. */
+static struct db_conn conn = {
+	.host = {0},
+	.port = {0},
+	.db_name = {0}
+};

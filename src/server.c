@@ -19,13 +19,10 @@
 #include <unistd.h>
 
 #include <38-moths/38-moths.h>
+#include <oleg-http/oleg-http.h>
 
-#include "db.h"
-#include "http.h"
 #include "server.h"
-#include "grengine.h"
-#include "greshunkel.h"
-
+#include "common_defs.h"
 
 const static char LNAV[] =
 "<nav class=\"lnav grd\">"
@@ -47,13 +44,13 @@ const static char LNAV[] =
 "</nav>";
 
 /* Various handlers for our routes: */
-static int static_handler(const http_request *request, http_response *response, const void *e) {
+int static_handler(const http_request *request, http_response *response) {
 	/* Remove the leading slash: */
 	const char *file_path = request->resource + sizeof(char);
 	return mmap_file(file_path, response);
 }
 
-static int index_handler(const http_request *request, http_response *response, const void *e) {
+int index_handler(const http_request *request, http_response *response) {
 	int rc = mmap_file("./templates/index.html", response);
 	if (rc != 200)
 		return rc;
@@ -64,12 +61,11 @@ static int index_handler(const http_request *request, http_response *response, c
 	/* Render that shit */
 	size_t new_size = 0;
 	greshunkel_ctext *ctext = gshkl_init_context();
-	const db_conn *conn = (db_conn *)e;
 	gshkl_add_string(ctext, "LNAV", LNAV);
-	gshkl_add_string(ctext, "DB_NAME", conn->db_name);
+	gshkl_add_string(ctext, "DB_NAME", conn.db_name);
 
-	gshkl_add_int(ctext, "key_count", fetch_num_keyset_from_db(conn));
-	gshkl_add_int(ctext, "UPTIME", fetch_uptime_from_db(conn));
+	gshkl_add_int(ctext, "key_count", fetch_num_keyset_from_db(&conn));
+	gshkl_add_int(ctext, "UPTIME", fetch_uptime_from_db(&conn));
 
 	char *rendered = gshkl_render(ctext, mmapd_region, original_size, &new_size);
 	gshkl_free_context(ctext);
@@ -84,7 +80,7 @@ static int index_handler(const http_request *request, http_response *response, c
 	return 200;
 }
 
-static int datum_handler(const http_request *request, http_response *response, const void *e) {
+int datum_handler(const http_request *request, http_response *response) {
 	int rc = mmap_file("./templates/datum.html", response);
 	if (rc != 200)
 		return rc;
@@ -93,9 +89,8 @@ static int datum_handler(const http_request *request, http_response *response, c
 
 	size_t new_size = 0;
 	greshunkel_ctext *ctext = gshkl_init_context();
-	const db_conn *conn = (db_conn *)e;
 	gshkl_add_string(ctext, "LNAV", LNAV);
-	gshkl_add_string(ctext, "DB_NAME", conn->db_name);
+	gshkl_add_string(ctext, "DB_NAME", conn.db_name);
 
 	char key[MAX_KEY_SIZE] = {0};
 	strncpy(key, request->resource + request->matches[1].rm_so, MAX_KEY_SIZE);
@@ -103,7 +98,7 @@ static int datum_handler(const http_request *request, http_response *response, c
 	gshkl_add_string(ctext, "RECORD", key);
 
 	size_t dsize = 0;
-	char *data = (char *)fetch_data_from_db(conn, key, &dsize);
+	char *data = (char *)fetch_data_from_db(&conn, key, &dsize);
 	if (data)
 		gshkl_add_string(ctext, "VALUE", data);
 	else
@@ -121,7 +116,7 @@ static int datum_handler(const http_request *request, http_response *response, c
 	return 200;
 }
 
-static int data_handler(const http_request *request, http_response *response, const void *e) {
+int data_handler(const http_request *request, http_response *response) {
 	int rc = mmap_file("./templates/data.html", response);
 	if (rc != 200)
 		return rc;
@@ -130,18 +125,17 @@ static int data_handler(const http_request *request, http_response *response, co
 
 	size_t new_size = 0;
 	greshunkel_ctext *ctext = gshkl_init_context();
-	const db_conn *conn = (db_conn *)e;
 	gshkl_add_string(ctext, "LNAV", LNAV);
-	gshkl_add_string(ctext, "DB_NAME", conn->db_name);
+	gshkl_add_string(ctext, "DB_NAME", conn.db_name);
 
-	greshunkel_var *records = gshkl_add_array(ctext, "RECORDS");
+	greshunkel_var records = gshkl_add_array(ctext, "RECORDS");
 	int i = 0;
-	db_key_match *matches = fetch_keyset_from_db(conn);
+	db_key_match *matches = fetch_keyset_from_db(&conn);
 	db_key_match *cur = matches;
 	while (cur) {
 		i++;
 		db_key_match *n = cur->next;
-		gshkl_add_string_to_loop(records, cur->key);
+		gshkl_add_string_to_loop(&records, cur->key);
 		free(cur);
 		cur = n;
 	}
@@ -159,105 +153,7 @@ static int data_handler(const http_request *request, http_response *response, co
 	return 200;
 }
 
-static int favicon_handler(const http_request *request, http_response *response, const void *e) {
+int favicon_handler(const http_request *request, http_response *response) {
 	strncpy(response->mimetype, "image/x-icon", sizeof(response->mimetype));
 	return mmap_file("./static/favicon.ico", response);
 }
-
-/* All other routes: */
-static const route all_routes[] = {
-	{"GET", "^/favicon.ico$", 0, &favicon_handler, &mmap_cleanup},
-	{"GET", "^/static/[a-zA-Z0-9/_-]*\\.[a-zA-Z]*$", 0, &static_handler, &mmap_cleanup},
-	{"GET", "^/data$", 0, &data_handler, &heap_cleanup},
-	{"GET", "^/datum/([a-zA-Z0-9\\/\\_\\-\\:]*)$", 1, &datum_handler, &heap_cleanup},
-	{"GET", "^/$", 0, &index_handler, &heap_cleanup},
-};
-
-struct acceptor_arg {
-	const int sock;
-	const db_conn *conn;
-};
-
-static void *acceptor(void *arg) {
-	const struct acceptor_arg *args = (struct acceptor_arg *)arg;
-	const int main_sock_fd = args->sock;
-	const db_conn *conn = args->conn;
-
-	while(1) {
-		struct sockaddr_storage their_addr = {0};
-		socklen_t sin_size = sizeof(their_addr);
-
-		int new_fd = accept(main_sock_fd, (struct sockaddr *)&their_addr, &sin_size);
-
-		if (new_fd == -1) {
-			log_msg(LOG_ERR, "Could not accept new connection.");
-			return NULL;
-		} else {
-			respond(new_fd, all_routes, sizeof(all_routes)/sizeof(all_routes[0]), conn);
-			close(new_fd);
-		}
-	}
-	return NULL;
-}
-
-int http_serve(int main_sock_fd, const int num_threads, const db_conn *conn) {
-	/* Our acceptor pool: */
-	pthread_t workers[num_threads];
-
-	int rc = -1;
-	main_sock_fd = socket(PF_INET, SOCK_STREAM, 0);
-	if (main_sock_fd <= 0) {
-		log_msg(LOG_ERR, "Could not create main socket.");
-		goto error;
-	}
-
-	int opt = 1;
-	setsockopt(main_sock_fd, SOL_SOCKET, SO_REUSEADDR, (void*) &opt, sizeof(opt));
-
-	const int port = 8666;
-	struct sockaddr_in hints = {0};
-	hints.sin_family		 = AF_INET;
-	hints.sin_port			 = htons(port);
-	hints.sin_addr.s_addr	 = htonl(INADDR_ANY);
-
-	rc = bind(main_sock_fd, (struct sockaddr *)&hints, sizeof(hints));
-	if (rc < 0) {
-		log_msg(LOG_ERR, "Could not bind main socket.");
-		goto error;
-	}
-
-	rc = listen(main_sock_fd, 0);
-	if (rc < 0) {
-		log_msg(LOG_ERR, "Could not listen on main socket.");
-		goto error;
-	}
-	log_msg(LOG_FUN, "Listening on http://localhost:%i/", port);
-
-	struct acceptor_arg arg = {
-		.sock = main_sock_fd,
-		.conn = conn
-	};
-
-	int i;
-	for (i = 0; i < num_threads; i++) {
-		if (pthread_create(&workers[i], NULL, acceptor, &arg) != 0) {
-			goto error;
-		}
-		log_msg(LOG_INFO, "Thread %i started.", i);
-	}
-
-	for (i = 0; i < num_threads; i++) {
-		pthread_join(workers[i], NULL);
-		log_msg(LOG_INFO, "Thread %i stopped.", i);
-	}
-
-
-	close(main_sock_fd);
-	return 0;
-
-error:
-	perror("Socket error");
-	close(main_sock_fd);
-	return rc;
-}
-
