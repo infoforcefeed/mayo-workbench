@@ -18,6 +18,11 @@
 #define DEFAULT_DB_PORT "38080"
 
 int main_sock_fd = 0;
+struct db_conn conn = {
+	.host = {0},
+	.port = {0},
+	.db_name = {0}
+};
 
 void term(int signum) {
 	close(main_sock_fd);

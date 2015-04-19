@@ -12,8 +12,4 @@
 #include <oleg-http/oleg-http.h>
 
 /* Global connection object. */
-static struct db_conn conn = {
-	.host = {0},
-	.port = {0},
-	.db_name = {0}
-};
+extern struct db_conn conn;
