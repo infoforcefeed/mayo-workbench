@@ -51,15 +51,6 @@ int static_handler(const http_request *request, http_response *response) {
 }
 
 int index_handler(const http_request *request, http_response *response) {
-	int rc = mmap_file("./templates/index.html", response);
-	if (rc != 200)
-		return rc;
-	// 1. Render the mmap()'d file with greshunkel
-	const char *mmapd_region = (char *)response->out;
-	const size_t original_size = response->outsize;
-
-	/* Render that shit */
-	size_t new_size = 0;
 	greshunkel_ctext *ctext = gshkl_init_context();
 	gshkl_add_string(ctext, "LNAV", LNAV);
 	gshkl_add_string(ctext, "DB_NAME", conn.db_name);
@@ -67,27 +58,10 @@ int index_handler(const http_request *request, http_response *response) {
 	gshkl_add_int(ctext, "key_count", fetch_num_keyset_from_db(&conn));
 	gshkl_add_int(ctext, "UPTIME", fetch_uptime_from_db(&conn));
 
-	char *rendered = gshkl_render(ctext, mmapd_region, original_size, &new_size);
-	gshkl_free_context(ctext);
-
-	/* Clean up the stuff we're no longer using. */
-	munmap(response->out, original_size);
-	free(response->extra_data);
-
-	/* Make sure the response is kept up to date: */
-	response->outsize = new_size;
-	response->out = (unsigned char *)rendered;
-	return 200;
+	return render_file(ctext, "./templates/index.html", response);
 }
 
 int datum_handler(const http_request *request, http_response *response) {
-	int rc = mmap_file("./templates/datum.html", response);
-	if (rc != 200)
-		return rc;
-	const char *mmapd_region = (char *)response->out;
-	const size_t original_size = response->outsize;
-
-	size_t new_size = 0;
 	greshunkel_ctext *ctext = gshkl_init_context();
 	gshkl_add_string(ctext, "LNAV", LNAV);
 	gshkl_add_string(ctext, "DB_NAME", conn.db_name);
@@ -105,25 +79,10 @@ int datum_handler(const http_request *request, http_response *response) {
 		gshkl_add_string(ctext, "VALUE", "(No data for this key)");
 	free(data);
 
-	char *rendered = gshkl_render(ctext, mmapd_region, original_size, &new_size);
-	gshkl_free_context(ctext);
-
-	munmap(response->out, original_size);
-	free(response->extra_data);
-
-	response->outsize = new_size;
-	response->out = (unsigned char *)rendered;
-	return 200;
+	return render_file(ctext, "./templates/datum.html", response);
 }
 
 int data_handler(const http_request *request, http_response *response) {
-	int rc = mmap_file("./templates/data.html", response);
-	if (rc != 200)
-		return rc;
-	const char *mmapd_region = (char *)response->out;
-	const size_t original_size = response->outsize;
-
-	size_t new_size = 0;
 	greshunkel_ctext *ctext = gshkl_init_context();
 	gshkl_add_string(ctext, "LNAV", LNAV);
 	gshkl_add_string(ctext, "DB_NAME", conn.db_name);
@@ -142,15 +101,7 @@ int data_handler(const http_request *request, http_response *response) {
 
 	gshkl_add_int(ctext, "RESULT_COUNT", i);
 
-	char *rendered = gshkl_render(ctext, mmapd_region, original_size, &new_size);
-	gshkl_free_context(ctext);
-
-	munmap(response->out, original_size);
-	free(response->extra_data);
-
-	response->outsize = new_size;
-	response->out = (unsigned char *)rendered;
-	return 200;
+	return render_file(ctext, "./templates/data.html", response);
 }
 
 int favicon_handler(const http_request *request, http_response *response) {
