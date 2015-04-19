@@ -25,23 +25,23 @@
 #include "common_defs.h"
 
 const static char LNAV[] =
-"<nav class=\"lnav grd\">"
-"	<div class=\"row\">"
-"		<div class=\"col-6\">"
-"			<h4>OlegDB</h4>"
-"			<span class=\"lnav-section\">Mayo Workbench</span>"
-"			<ul>"
-"				<li><a href=\"/\">Overview</a></li>"
-"				<li><a href=\"/data\">Data</a></li>"
-"			</ul>"
-"			<span class=\"lnav-section\">OlegDB</span>"
-"			<ul>"
-"				<li><a href=\"https://olegdb.org/docs/0.1.5/en/documentation.html\">Documentation</a></li>"
-"			</ul>"
-"		</div>"
-"	</div>"
-"	<p class=\"copyright\">&copy;2015 Quinlan Pfiffer</p>"
-"</nav>";
+"<nav class=\"lnav grd\">\n"
+"	<div class=\"row\">\n"
+"		<div class=\"col-6\">\n"
+"			<h4>OlegDB</h4>\n"
+"			<span class=\"lnav-section\">Mayo Workbench</span>\n"
+"			<ul>\n"
+"				<li><a href=\"/\">Overview</a></li>\n"
+"				<li><a href=\"/data\">Data</a></li>\n"
+"			</ul>\n"
+"			<span class=\"lnav-section\">OlegDB</span>\n"
+"			<ul>\n"
+"				<li><a href=\"https://olegdb.org/docs/0.1.5/en/documentation.html\">Documentation</a></li>\n"
+"			</ul>\n"
+"		</div>\n"
+"	</div>\n"
+"	<p class=\"copyright\">&copy;2015 Quinlan Pfiffer</p>\n"
+"</nav>\n";
 
 /* Various handlers for our routes: */
 int static_handler(const http_request *request, http_response *response) {

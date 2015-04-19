@@ -1,4 +1,4 @@
-CFLAGS=-Werror -Wall -O2 -g3
+CFLAGS=-Werror -Wall -O3 -g
 INCLUDES=-pthread -I./include/
 NAME=mayoworkbench
 LIBS=-l38moths -loleg-http
