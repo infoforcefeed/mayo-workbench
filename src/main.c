@@ -34,6 +34,8 @@ static const route all_routes[] = {
 	{"GET", "favicon_handler", "^/favicon.ico$", 0, &favicon_handler, &mmap_cleanup},
 	{"GET", "static_handler", "^/static/[a-zA-Z0-9/_-]*\\.[a-zA-Z]*$", 0, &static_handler, &mmap_cleanup},
 	{"GET", "data_handler", "^/data$", 0, &data_handler, &heap_cleanup},
+	{"GET", "datum_handler_save", "^/datum/save/([a-zA-Z0-9\\/\\_\\-\\:\\@\\.]*)$", 1, &datum_handler_save, &heap_cleanup},
+	{"GET", "datum_handler_delete", "^/datum/delete/([a-zA-Z0-9\\/\\_\\-\\:\\@\\.]*)$", 1, &datum_handler_delete, &heap_cleanup},
 	{"GET", "datum_handler", "^/datum/([a-zA-Z0-9\\/\\_\\-\\:\\@\\.]*)$", 1, &datum_handler, &heap_cleanup},
 	{"GET", "root_handler", "^/$", 0, &index_handler, &heap_cleanup},
 };

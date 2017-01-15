@@ -82,6 +82,14 @@ int datum_handler(const http_request *request, http_response *response) {
 	return render_file(ctext, "./templates/datum.html", response);
 }
 
+int datum_handler_save(const http_request *request, http_response *response) {
+	return datum_handler(request, response);
+}
+
+int datum_handler_delete(const http_request *request, http_response *response) {
+	return datum_handler(request, response);
+}
+
 int data_handler(const http_request *request, http_response *response) {
 	greshunkel_ctext *ctext = gshkl_init_context();
 	gshkl_add_string(ctext, "LNAV", LNAV);
