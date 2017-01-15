@@ -13,12 +13,17 @@
 				<div class="row">
 					<article class="info-block">
 						<div class="grd">
-							<div class="row">
-								<div class="col-3">
-									<a href="/data">&laquo; Back</a>
+							<div class="grd-row">
+								<div class="grd-row-col-2-6">
+									<a href="/data" class="btn">&laquo; Back</a>
 								</div>
-								<div class="col-3">
+								<div class="grd-row-col-2-6">
 									<code class="small-record">xXx @RECORD xXx</code>
+								</div>
+								<div class="grd-row-col-2-6">
+									<a href="#" class="delete-toggle btn--red">Delete Record</a>
+									<a href="/datum/delete/xXx @RECORD xXx" class="delete delete-yes hidden btn--s btn--red">Sure, that sounds great. Please continue and thank you for requesting confirmation from me.</a>
+									<a href="#" class="delete delete-no hidden btn--s btn--blue">No I'm not sure that's what I want to do. Please take me back and let me dwell on the paths laid before me.</a>
 								</div>
 							</div>
 						</div>
@@ -33,6 +38,30 @@
 			</div>
 		</div>
 	</body>
+	<script src="/static/js/jquery.js"></script>
+	<script>
+		$(function() {
+			$("a.delete-toggle").on("click", function(e) {
+				$(this).hide();
+				$(e.target).siblings(".delete").show();
+			});
+			$("a.delete-no").on("click", function(e) {
+				$("a.delete-toggle").show();
+				$(e.target).parent(".delete").hide();
+			});
+			$("a.delete-yes").on("click", function(e) {
+				e.preventDefault();
+				var self = this;
+				$.ajax({ type: "POST",
+					url: self.href,
+					dataType: "json",
+					success: function() {
+						window.location = "/data"
+					},
+				});
+			});
+		});
+	</script>
 </html>
 <!-- vim: noet ts=4 sw=4:
 -->
