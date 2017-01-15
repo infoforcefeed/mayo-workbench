@@ -28,9 +28,10 @@
 							</div>
 						</div>
 						<div class="grd">
-							<div class="row">
+							<div class="grd-row">
 								<label for="value">Value</label>
 								<textarea>xXx @VALUE xXx</textarea>
+								<a href="/datum/save/xXx @RECORD xXx" class="btn btn--green">Save</a>
 							</div>
 						</div>
 					</article>
@@ -47,7 +48,8 @@
 			});
 			$("a.delete-no").on("click", function(e) {
 				$("a.delete-toggle").show();
-				$(e.target).parent(".delete").hide();
+				$(e.target).siblings(".delete").hide();
+				$(this).hide();
 			});
 			$("a.delete-yes").on("click", function(e) {
 				e.preventDefault();
