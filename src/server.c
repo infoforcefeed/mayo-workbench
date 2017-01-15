@@ -87,7 +87,20 @@ int datum_handler_save(const http_request *request, http_response *response) {
 }
 
 int datum_handler_delete(const http_request *request, http_response *response) {
-	return datum_handler(request, response);
+	greshunkel_ctext *ctext = gshkl_init_context();
+	gshkl_add_string(ctext, "DATA", "{}");
+
+	char key[MAX_KEY_SIZE] = {0};
+	strncpy(key, request->resource + request->matches[1].rm_so, MAX_KEY_SIZE);
+
+	if (delete_record_from_db(&conn, key)) {
+		gshkl_add_string(ctext, "SUCCESS", "true");
+		gshkl_add_string(ctext, "ERROR", "");
+	} else {
+		gshkl_add_string(ctext, "SUCCESS", "false");
+		gshkl_add_string(ctext, "ERROR", "Could not delete that record.");
+	}
+	return render_file(ctext, "./templates/response.json", response);
 }
 
 int data_handler(const http_request *request, http_response *response) {

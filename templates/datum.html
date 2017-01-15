@@ -57,7 +57,8 @@
 				$.ajax({ type: "POST",
 					url: self.href,
 					dataType: "json",
-					success: function() {
+					success: function(response) {
+						debugger;
 						window.location = "/data"
 					},
 				});
