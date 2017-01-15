@@ -26,12 +26,16 @@
 									<a href="#" class="delete delete-no hidden btn--s btn--blue">No I'm not sure that's what I want to do. Please take me back and let me dwell on the paths laid before me.</a>
 								</div>
 							</div>
-						</div>
-						<div class="grd">
+
+							<div class="grd-row py1">
+								<div class="grd-row-col-6">
+									<textarea id="record_data">xXx @VALUE xXx</textarea>
+								</div>
+							</div>
 							<div class="grd-row">
-								<label for="value">Value</label>
-								<textarea>xXx @VALUE xXx</textarea>
-								<a href="/datum/save/xXx @RECORD xXx" class="btn btn--green">Save</a>
+								<div class="grd-row-col-6">
+									<a id="save_btn" href="/datum/save/xXx @RECORD xXx" class="btn btn--green">Save</a>
+									<span id="saved" class="hidden">Saved!</a>
 							</div>
 						</div>
 					</article>
@@ -58,8 +62,20 @@
 					url: self.href,
 					dataType: "json",
 					success: function(response) {
-						debugger;
 						window.location = "/data"
+					},
+				});
+			});
+			$("#save_btn").on("click", function(e) {
+				e.preventDefault();
+				var self = this;
+				var data = $("#record_data").val();
+				$.ajax({ type: "POST",
+					url: self.href,
+					dataType: "json",
+					data: data,
+					success: function(response) {
+						$("#saved").show().fadeOut(1200);
 					},
 				});
 			});
