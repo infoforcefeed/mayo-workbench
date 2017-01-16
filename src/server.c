@@ -97,7 +97,7 @@ int datum_handler_save(const http_request *request, http_response *response) {
 		gshkl_add_string(ctext, "ERROR", "");
 	} else {
 		gshkl_add_string(ctext, "SUCCESS", "false");
-		gshkl_add_string(ctext, "ERROR", "Could not delete that record.");
+		gshkl_add_string(ctext, "ERROR", "Could not save that record.");
 	}
 
 	gshkl_add_string(ctext, "SUCCESS", "true");
@@ -142,6 +142,32 @@ int data_handler(const http_request *request, http_response *response) {
 	gshkl_add_int(ctext, "RESULT_COUNT", i);
 
 	return render_file(ctext, "./templates/data.html", response);
+}
+
+int data_handler_filter(const http_request *request, http_response *response) {
+	greshunkel_ctext *ctext = gshkl_init_context();
+	greshunkel_var items_arr = gshkl_add_array(ctext, "ITEMS");
+
+	char prefix[MAX_KEY_SIZE] = {0};
+	strncpy(prefix, request->resource + request->matches[1].rm_so, MAX_KEY_SIZE);
+
+	db_key_match *matches = fetch_matches_from_db(&conn, prefix);
+	if (matches) {
+		gshkl_add_string(ctext, "SUCCESS", "true");
+		gshkl_add_string(ctext, "ERROR", "");
+
+		db_key_match *current = matches;
+		while (current) {
+			db_key_match *next = current->next;
+			gshkl_add_string_to_loop(&items_arr, current->key);
+			free(current);
+			current = next;
+		}
+	} else {
+		gshkl_add_string(ctext, "SUCCESS", "false");
+		gshkl_add_string(ctext, "ERROR", "Could not get records matching that prefix.");
+	}
+	return render_file(ctext, "./templates/response_list.json", response);
 }
 
 int favicon_handler(const http_request *request, http_response *response) {
