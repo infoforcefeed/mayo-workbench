@@ -30,15 +30,15 @@ void term(int signum) {
 }
 
 /* All other routes: */
-static const route all_routes[] = {
-	{"GET", "favicon_handler", "^/favicon.ico$", 0, &favicon_handler, &mmap_cleanup},
-	{"GET", "static_handler", "^/static/[a-zA-Z0-9/_-]*\\.[a-zA-Z]*$", 0, &static_handler, &mmap_cleanup},
-	{"GET", "data_handler", "^/data$", 0, &data_handler, &heap_cleanup},
-	{"POST", "data_handler_filter", "^/data/filter/([a-zA-Z0-9\\/\\_\\-\\:\\@\\.]*)$", 1, &data_handler_filter, &heap_cleanup},
-	{"POST", "datum_handler_save", "^/datum/save/([a-zA-Z0-9\\/\\_\\-\\:\\@\\.]*)$", 1, &datum_handler_save, &heap_cleanup},
-	{"POST", "datum_handler_delete", "^/datum/delete/([a-zA-Z0-9\\/\\_\\-\\:\\@\\.]*)$", 1, &datum_handler_delete, &heap_cleanup},
-	{"GET", "datum_handler", "^/datum/([a-zA-Z0-9\\/\\_\\-\\:\\@\\.]*)$", 1, &datum_handler, &heap_cleanup},
-	{"GET", "root_handler", "^/$", 0, &index_handler, &heap_cleanup},
+static const m38_route all_routes[] = {
+	{"GET", "favicon_handler", "^/favicon.ico$", 0, &favicon_handler, &m38_mmap_cleanup},
+	{"GET", "static_handler", "^/static/[a-zA-Z0-9/_-]*\\.[a-zA-Z]*$", 0, &static_handler, &m38_mmap_cleanup},
+	{"GET", "data_handler", "^/data$", 0, &data_handler, &m38_heap_cleanup},
+	{"POST", "data_handler_filter", "^/data/filter/([a-zA-Z0-9\\/\\_\\-\\:\\@\\.]*)$", 1, &data_handler_filter, &m38_heap_cleanup},
+	{"POST", "datum_handler_save", "^/datum/save/([a-zA-Z0-9\\/\\_\\-\\:\\@\\.]*)$", 1, &datum_handler_save, &m38_heap_cleanup},
+	{"POST", "datum_handler_delete", "^/datum/delete/([a-zA-Z0-9\\/\\_\\-\\:\\@\\.]*)$", 1, &datum_handler_delete, &m38_heap_cleanup},
+	{"GET", "datum_handler", "^/datum/([a-zA-Z0-9\\/\\_\\-\\:\\@\\.]*)$", 1, &datum_handler, &m38_heap_cleanup},
+	{"GET", "root_handler", "^/$", 0, &index_handler, &m38_heap_cleanup},
 };
 
 int main(int argc, char *argv[]) {
@@ -60,11 +60,11 @@ int main(int argc, char *argv[]) {
 			if ((i + 1) < argc) {
 				num_threads = strtol(argv[++i], NULL, 10);
 				if (num_threads <= 0) {
-					log_msg(LOG_ERR, "Thread count must be at least 1.");
+					m38_log_msg(LOG_ERR, "Thread count must be at least 1.");
 					return -1;
 				}
 			} else {
-				log_msg(LOG_ERR, "Not enough arguments to -t.");
+				m38_log_msg(LOG_ERR, "Not enough arguments to -t.");
 				return -1;
 			}
 		} else if (strncmp(cur_arg, "-h", strlen("-h")) == 0) {
@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
 				const char *host = argv[++i];
 				strncpy(conn.host, host, sizeof(conn.host));
 			} else {
-				log_msg(LOG_ERR, "Not enough arguments to -h.");
+				m38_log_msg(LOG_ERR, "Not enough arguments to -h.");
 				return -1;
 			}
 		} else if (strncmp(cur_arg, "-p", strlen("-p")) == 0) {
@@ -80,7 +80,7 @@ int main(int argc, char *argv[]) {
 				const char *port = argv[++i];
 				strncpy(conn.port, port, sizeof(conn.port));
 			} else {
-				log_msg(LOG_ERR, "Not enough arguments to -p.");
+				m38_log_msg(LOG_ERR, "Not enough arguments to -p.");
 				return -1;
 			}
 		} else if (strncmp(cur_arg, "-n", strlen("-n")) == 0) {
@@ -88,23 +88,24 @@ int main(int argc, char *argv[]) {
 				const char *name = argv[++i];
 				strncpy(conn.db_name, name, sizeof(conn.db_name));
 			} else {
-				log_msg(LOG_ERR, "Not enough arguments to -n.");
+				m38_log_msg(LOG_ERR, "Not enough arguments to -n.");
 				return -1;
 			}
 		}
 	}
 
 	if (!strnlen(conn.db_name, sizeof(conn.db_name))) {
-		log_msg(LOG_ERR, "A database name is required (for now). Please specify one with -n.");
+		m38_log_msg(LOG_ERR, "A database name is required (for now). Please specify one with -n.");
 		exit(1);
 	}
 
-	log_msg(LOG_INFO, "Connecting to db '%s' on host: http://%s:%s.", conn.db_name, conn.host, conn.port);
+	m38_log_msg(LOG_INFO, "Connecting to db '%s' on host: http://%s:%s.", conn.db_name, conn.host, conn.port);
 
 	int rc = 0;
-	if ((rc = http_serve(&main_sock_fd, 8086, num_threads, all_routes, (sizeof(all_routes)/sizeof(all_routes[0])))) != 0) {
+	const size_t route_len = sizeof(all_routes)/sizeof(all_routes[0]);
+	if ((rc = m38_http_serve(&main_sock_fd, 8086, num_threads, all_routes, route_len)) != 0) {
 		term(SIGTERM);
-		log_msg(LOG_ERR, "Could not start HTTP service.");
+		m38_log_msg(LOG_ERR, "Could not start HTTP service.");
 		return rc;
 	}
 	return 0;

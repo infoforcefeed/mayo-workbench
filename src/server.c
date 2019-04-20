@@ -44,13 +44,13 @@ const static char LNAV[] =
 "</nav>\n";
 
 /* Various handlers for our routes: */
-int static_handler(const http_request *request, http_response *response) {
+int static_handler(const m38_http_request *request, m38_http_response *response) {
 	/* Remove the leading slash: */
 	const char *file_path = request->resource + sizeof(char);
-	return mmap_file(file_path, response);
+	return m38_mmap_file(file_path, response);
 }
 
-int index_handler(const http_request *request, http_response *response) {
+int index_handler(const m38_http_request *request, m38_http_response *response) {
 	greshunkel_ctext *ctext = gshkl_init_context();
 	gshkl_add_string(ctext, "LNAV", LNAV);
 	gshkl_add_string(ctext, "DB_NAME", conn.db_name);
@@ -58,10 +58,10 @@ int index_handler(const http_request *request, http_response *response) {
 	gshkl_add_int(ctext, "key_count", fetch_num_keyset_from_db(&conn));
 	gshkl_add_int(ctext, "UPTIME", fetch_uptime_from_db(&conn));
 
-	return render_file(ctext, "./templates/index.html", response);
+	return m38_render_file(ctext, "./templates/index.html", response);
 }
 
-int datum_handler(const http_request *request, http_response *response) {
+int datum_handler(const m38_http_request *request, m38_http_response *response) {
 	greshunkel_ctext *ctext = gshkl_init_context();
 	gshkl_add_string(ctext, "LNAV", LNAV);
 	gshkl_add_string(ctext, "DB_NAME", conn.db_name);
@@ -79,10 +79,10 @@ int datum_handler(const http_request *request, http_response *response) {
 		gshkl_add_string(ctext, "VALUE", "(No data for this key)");
 	free(data);
 
-	return render_file(ctext, "./templates/datum.html", response);
+	return m38_render_file(ctext, "./templates/datum.html", response);
 }
 
-int datum_handler_save(const http_request *request, http_response *response) {
+int datum_handler_save(const m38_http_request *request, m38_http_response *response) {
 	greshunkel_ctext *ctext = gshkl_init_context();
 	gshkl_add_string(ctext, "DATA", "{}");
 
@@ -102,10 +102,10 @@ int datum_handler_save(const http_request *request, http_response *response) {
 
 	gshkl_add_string(ctext, "SUCCESS", "true");
 	gshkl_add_string(ctext, "ERROR", "");
-	return render_file(ctext, "./templates/response.json", response);
+	return m38_render_file(ctext, "./templates/response.json", response);
 }
 
-int datum_handler_delete(const http_request *request, http_response *response) {
+int datum_handler_delete(const m38_http_request *request, m38_http_response *response) {
 	greshunkel_ctext *ctext = gshkl_init_context();
 	gshkl_add_string(ctext, "DATA", "{}");
 
@@ -119,10 +119,10 @@ int datum_handler_delete(const http_request *request, http_response *response) {
 		gshkl_add_string(ctext, "SUCCESS", "false");
 		gshkl_add_string(ctext, "ERROR", "Could not delete that record.");
 	}
-	return render_file(ctext, "./templates/response.json", response);
+	return m38_render_file(ctext, "./templates/response.json", response);
 }
 
-int data_handler(const http_request *request, http_response *response) {
+int data_handler(const m38_http_request *request, m38_http_response *response) {
 	greshunkel_ctext *ctext = gshkl_init_context();
 	gshkl_add_string(ctext, "LNAV", LNAV);
 	gshkl_add_string(ctext, "DB_NAME", conn.db_name);
@@ -141,10 +141,10 @@ int data_handler(const http_request *request, http_response *response) {
 
 	gshkl_add_int(ctext, "RESULT_COUNT", i);
 
-	return render_file(ctext, "./templates/data.html", response);
+	return m38_render_file(ctext, "./templates/data.html", response);
 }
 
-int data_handler_filter(const http_request *request, http_response *response) {
+int data_handler_filter(const m38_http_request *request, m38_http_response *response) {
 	greshunkel_ctext *ctext = gshkl_init_context();
 	greshunkel_var items_arr = gshkl_add_array(ctext, "ITEMS");
 
@@ -167,10 +167,10 @@ int data_handler_filter(const http_request *request, http_response *response) {
 		gshkl_add_string(ctext, "SUCCESS", "false");
 		gshkl_add_string(ctext, "ERROR", "Could not get records matching that prefix.");
 	}
-	return render_file(ctext, "./templates/response_list.json", response);
+	return m38_render_file(ctext, "./templates/response_list.json", response);
 }
 
-int favicon_handler(const http_request *request, http_response *response) {
+int favicon_handler(const m38_http_request *request, m38_http_response *response) {
 	strncpy(response->mimetype, "image/x-icon", sizeof(response->mimetype));
-	return mmap_file("./static/favicon.ico", response);
+	return m38_mmap_file("./static/favicon.ico", response);
 }
