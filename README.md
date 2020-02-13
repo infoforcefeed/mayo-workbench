@@ -10,7 +10,7 @@ stored in [OlegDB.](https://olegdb.org/)
 Requires two dependencies:
 
 * [38-Moths](https://github.com/qpfiffer/38-Moths)
-* [liboleg-http](https://github.com/Xe/oleg/tree/master/c)
+* [liboleg-http](https://github.com/qpfiffer/oleg/tree/master/c)
 
 ```
 make
